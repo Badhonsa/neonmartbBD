@@ -1,0 +1,104 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Add your custom styles here */
+    </style>
+</head>
+<body>
+
+    <div class="container mt-5">
+        <h1 class="mb-4">Shopping Cart</h1>
+
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Quantity</th>
+                    <th>Price</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in cart_items %}
+                <tr>
+                    <td>{{ item.product.name }}</td>
+                    <td>
+                        <button class="quantity-btn" onclick="updateQuantity({{ item.product.id }}, 'decrease')">-</button>
+                        {{ item.quantity }}
+                        <button class="quantity-btn" onclick="updateQuantity({{ item.product.id }}, 'increase')">+</button>
+                    </td>
+                    <td>${{ item.product.price }}</td>
+                    <td>
+                        <a href="" class="btn btn-danger">Remove</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <p>Total Price: ${{ total_price }}</p>
+
+        <a href="" class="btn btn-primary">Proceed to Checkout</a>
+
+        <!-- Download button -->
+        <button onclick="downloadCart()" class="btn btn-success">Download Cart</button>
+    </div>
+
+    <script>
+        function updateQuantity(productId, action) {
+            fetch(`/addtoCart/${productId}/`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded',
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: 'action=' + action
+            })
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                window.location.reload(); // Reload the page after successful update
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        }
+
+        function downloadCart() {
+            // Convert cart_items to JSON format
+            const cartData = JSON.parse(document.getElementById('cart-data').textContent);
+
+            // Convert JSON to CSV format
+            const csvData = convertToCSV(cartData);
+
+            // Create a temporary anchor element to trigger the download
+            const anchor = document.createElement('a');
+            anchor.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvData);
+            anchor.download = 'shopping_cart.csv';
+            anchor.click();
+        }
+
+        function convertToCSV(data) {
+            const header = Object.keys(data[0]).join(',');
+            const rows = data.map(item => Object.values(item).join(','));
+            return header + '\n' + rows.join('\n');
+        }
+    </script>
+
+    <!-- Store cart data in a hidden element -->
+
+    </script>
+
+</body>
+</html>
+
+{% endblock %}
